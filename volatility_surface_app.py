@@ -271,14 +271,16 @@ def run_ssvi_interactive():
 def run_svi_smile_interactive():
     """Launch an interactive 2D plot for the SVI volatility smile at a single maturity.
 
-    This function opens a Matplotlib window containing a 2D plot of Black implied
-    volatilities as a function of log-moneyness for a fixed time to maturity.
+    This function opens a Matplotlib window containing two subplots:
+    1. Top: SVI volatility smile as a function of log-moneyness
+    2. Bottom: Risk-neutral density function derived from the smile
+    
     It provides sliders for each of the five SVI parameters (a, b, rho, m, sigma)
     and the maturity, allowing the user to see how each parameter affects the
-    volatility smile shape.
+    volatility smile shape and implied probability distribution.
     """
-    # Define the grid for log‑moneyness
-    k_vals = np.linspace(-2.0, 2.0, 100)
+    # Define the grid for log‑moneyness - use reasonable range focused on typical smile behavior
+    k_vals = np.linspace(-3.0, 3.0, 300)
     
     # Set reasonable starting values for the SVI parameters and maturity
     init_params = {
@@ -299,21 +301,130 @@ def run_svi_smile_interactive():
         vol_smile = np.sqrt(np.maximum(total_variance, 0.0) / T)
         return vol_smile
 
-    vol_smile = compute_svi_smile(k_vals, **init_params)
+    def compute_risk_neutral_density(k_values, T, a, b, rho, m, sigma):
+        """Compute risk-neutral density from SVI total variance using correct Breeden-Litzenberger formula.
+        
+        This implements the complete derivation with the shape function g(y) that accounts for
+        the curvature and derivatives of the SVI total variance function.
+        
+        Following the derivation:
+        w(y) = a + b[ρ(y-m) + √((y-m)² + σ²)]
+        w'(y) = b[ρ + (y-m)/√((y-m)² + σ²)]
+        w''(y) = b σ² / ((y-m)² + σ²)^(3/2)
+        
+        g(y) = [1 - y w'(y)/(2w(y))]² - (w'(y))²/4 [1/w(y) + 1/4] + w''(y)/2
+        
+        p(y) = g(y)/√(2πw(y)) * exp(-d₋²/2)
+        where d₋ = -y/√w(y) - √w(y)/2
+        
+        f_S(x) = (1/x) * p(y) where y = ln(x/F)
+        
+        For log-moneyness density: ρ(k) = x * f_S(x) = F * exp(k) * f_S(F * exp(k)) = p(k)
+        """
+        # SVI total variance and its derivatives
+        y = k_values  # log-moneyness (using k instead of y for consistency with code)
+        diff = y - m
+        sqrt_term = np.sqrt(diff**2 + sigma**2)
+        
+        # Total variance w(y)
+        w = a + b * (rho * diff + sqrt_term)
+        
+        # Ensure positive total variance for numerical stability
+        w = np.maximum(w, 1e-8)
+        
+        # First derivative w'(y)
+        w_prime = b * (rho + diff / sqrt_term)
+        
+        # Second derivative w''(y) 
+        w_double_prime = b * sigma**2 / (sqrt_term**3)
+        
+        # Shape function g(y)
+        term1 = (1 - y * w_prime / (2 * w))**2
+        term2 = (w_prime**2 / 4) * (1/w + 1/4)
+        term3 = w_double_prime / 2
+        g = term1 - term2 + term3
+        
+        # d₋ term
+        sqrt_w = np.sqrt(w)
+        d_minus = -y / sqrt_w - sqrt_w / 2
+        
+        # Risk-neutral density in log-moneyness space p(y)
+        # This is the CORRECT formula with the shape function
+        density = (g / np.sqrt(2 * np.pi * w)) * np.exp(-d_minus**2 / 2)
+        
+        return density
 
-    # Create the figure and axes
-    fig, ax = plt.subplots(figsize=(10, 7))
+
+
+    def verify_density_properties(k_values, density):
+        """Verify that the computed density has proper mathematical properties."""
+        dk = k_values[1] - k_values[0]
+        
+        # Test 1: Check for negative densities (ARBITRAGE INDICATOR!)
+        negative_mask = density < 0
+        if np.any(negative_mask):
+            num_negative = np.sum(negative_mask)
+            min_density = np.min(density)
+            negative_k_range = [np.min(k_values[negative_mask]), np.max(k_values[negative_mask])]
+            print(f"🚨 ARBITRAGE DETECTED! 🚨")
+            print(f"Found {num_negative} points with NEGATIVE density!")
+            print(f"Minimum density: {min_density:.6f}")
+            print(f"Negative density occurs in k-range: [{negative_k_range[0]:.2f}, {negative_k_range[1]:.2f}]")
+        else:
+            print(f"✓ All density values are non-negative")
+        
+        # Test 2: Probability conservation (should integrate to 1)
+        # Only integrate positive part for meaningful probability
+        positive_density = np.maximum(density, 0.0)
+        total_prob = np.trapz(positive_density, k_values)
+        print(f"Total probability (positive part): {total_prob:.6f}")
+        
+        # Test 3: Full integral (including negative parts)
+        full_integral = np.trapz(density, k_values)
+        print(f"Full integral (including negatives): {full_integral:.6f}")
+        
+        # Test 4: Finite values
+        has_infinite = np.any(np.isinf(density))
+        has_nan = np.any(np.isnan(density))
+        print(f"Contains infinite values: {has_infinite}")
+        print(f"Contains NaN values: {has_nan}")
+        
+        # Test 5: Expected value (first moment, only positive part)
+        if total_prob > 0:
+            expected_k = np.trapz(k_values * positive_density, k_values) / total_prob
+            print(f"Expected log-moneyness (positive part): {expected_k:.6f}")
+        
+        return total_prob, np.min(density), not (has_infinite or has_nan)
+
+    vol_smile = compute_svi_smile(k_vals, **init_params)
+    density = compute_risk_neutral_density(k_vals, **init_params)
     
-    # Plot the initial smile
-    line, = ax.plot(k_vals, vol_smile, 'b-', linewidth=2, label='SVI volatility smile')
-    ax.set_xlabel("log‑moneyness (k)")
-    ax.set_ylabel("implied volatility")
-    ax.set_title(f"SVI volatility smile (T = {init_params['T']:.2f} years)")
-    ax.grid(True, alpha=0.3)
-    ax.legend()
+    # Verify the initial density
+    print("=== Density Verification ===")
+    verify_density_properties(k_vals, density)
+    print("============================")
+
+    # Create the figure with two subplots
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+    
+    # Plot the initial smile (top subplot)
+    line1, = ax1.plot(k_vals, vol_smile, 'b-', linewidth=2, label='SVI volatility smile')
+    ax1.set_xlabel("log‑moneyness (k)")
+    ax1.set_ylabel("implied volatility")
+    ax1.set_title(f"SVI volatility smile (T = {init_params['T']:.2f} years)")
+    ax1.grid(True, alpha=0.3)
+    ax1.legend()
+    
+    # Plot the initial density (bottom subplot)
+    line2, = ax2.plot(k_vals, density, 'r-', linewidth=2, label='Risk-neutral density')
+    ax2.set_xlabel("log‑moneyness (k)")
+    ax2.set_ylabel("probability density")
+    ax2.set_title(f"Risk-neutral density (T = {init_params['T']:.2f} years)")
+    ax2.grid(True, alpha=0.3)
+    ax2.legend()
 
     # Adjust layout to make room for sliders
-    plt.subplots_adjust(left=0.1, bottom=0.35)
+    plt.subplots_adjust(left=0.1, bottom=0.35, hspace=0.3)
 
     # Create axes for sliders
     slider_axs = {}
@@ -327,7 +438,7 @@ def run_svi_smile_interactive():
     }
 
     # Place sliders vertically stacked below the plot
-    slider_y_start = 0.25
+    slider_y_start = 0.3
     slider_height = 0.03
     slider_spacing = 0.04
     for i, (param, (p_min, p_max)) in enumerate(param_ranges.items()):
@@ -345,15 +456,22 @@ def run_svi_smile_interactive():
     def update(val=None):
         # Read current slider values
         params = {p: slider_axs[p].val for p in param_ranges.keys()}
-        # Recompute the smile
+        # Recompute the smile and density
         new_vol_smile = compute_svi_smile(k_vals, **params)
-        # Update the line data
-        line.set_ydata(new_vol_smile)
-        # Update title with current maturity
-        ax.set_title(f"SVI volatility smile (T = {params['T']:.2f} years)")
-        # Rescale y-axis if needed
-        ax.relim()
-        ax.autoscale_view(scalex=False, scaley=True)
+        new_density = compute_risk_neutral_density(k_vals, **params)
+        
+        # Update the smile line data (top subplot)
+        line1.set_ydata(new_vol_smile)
+        ax1.set_title(f"SVI volatility smile (T = {params['T']:.2f} years)")
+        ax1.relim()
+        ax1.autoscale_view(scalex=False, scaley=True)
+        
+        # Update the density line data (bottom subplot)
+        line2.set_ydata(new_density)
+        ax2.set_title(f"Risk-neutral density (T = {params['T']:.2f} years)")
+        ax2.relim()
+        ax2.autoscale_view(scalex=False, scaley=True)
+        
         fig.canvas.draw_idle()
 
     # Attach update callback to sliders

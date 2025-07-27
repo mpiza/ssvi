@@ -11,7 +11,8 @@ This application provides interactive visualization of volatility surfaces using
 5. [SSVI Model](#ssvi-model)
 6. [Parameter Interpretations](#parameter-interpretations)
 7. [Mathematical Background](#mathematical-background)
-8. [References](#references)
+8. [Testing and Verification](#testing-and-verification)
+9. [References](#references)
 
 ## Overview
 
@@ -64,7 +65,11 @@ The application will prompt you to select one of three visualization modes:
 
 ### 3. SVI Smile (Option 3)
 
-**Description**: Shows a 2D volatility smile for a single maturity using the SVI model. This is the most accurate representation of how SVI was originally designed to work.
+**Description**: Shows a 2D volatility smile for a single maturity using the SVI model, along with the corresponding risk-neutral density function. This provides the most accurate representation of how SVI was originally designed to work and reveals the market's implied probability distribution.
+
+**Visualization**: Two-panel display:
+- **Top panel**: SVI volatility smile vs. log-moneyness
+- **Bottom panel**: Risk-neutral probability density derived from the smile
 
 **Interactive Controls**:
 - 5 sliders for SVI parameters: `a`, `b`, `ρ`, `m`, `σ`
@@ -75,6 +80,17 @@ The application will prompt you to select one of three visualization modes:
 - Shows the true SVI behavior without cross-maturity artifacts
 - Better for understanding individual parameter effects
 - More pedagogically sound
+- **NEW**: Displays the risk-neutral density, revealing market expectations about future price distributions
+
+**Risk-Neutral Density**: The probability density function is computed using the Breeden-Litzenberger formula:
+```
+p(S) = e^(rT) × ∂²C/∂K²
+```
+In terms of log-moneyness k = ln(K/F), this becomes:
+```
+p(k) = e^k × (1/√(2πwT)) × exp(-d₂²/2)
+```
+where w(k) is the SVI total variance and d₂ = -k/√(wT) - √(wT)/2. This shows how the market prices different outcomes for the underlying asset.
 
 ## SVI Model
 
@@ -169,6 +185,35 @@ Where:
 - k < 0 corresponds to in-the-money calls (out-of-the-money puts)
 - k > 0 corresponds to out-of-the-money calls (in-the-money puts)
 
+### Risk-Neutral Density
+
+The risk-neutral density function represents the market's implied probability distribution for the underlying asset at expiration. It's derived from option prices using the Breeden-Litzenberger formula:
+
+```
+p(S) = e^(rT) × ∂²C/∂K²
+```
+
+Where `C(K,T)` is the call option price. In terms of log-moneyness k = ln(K/F):
+
+```
+p(k) = e^k × (1/√(2πwT)) × exp(-d₂²/2)
+```
+
+Where w(k) is the total variance and d₂ = -k/√(wT) - √(wT)/2.
+
+**Physical Interpretation**:
+- **Shape**: Shows where the market expects the asset price to be at expiration
+- **Mode**: The peak indicates the most likely outcome
+- **Skewness**: Asymmetry reveals directional bias (equity markets typically show negative skew)
+- **Tails**: Heavy tails indicate higher probability of extreme moves
+
+**Parameter Effects on Density**:
+- **a ↑**: Flattens the density (higher uncertainty)
+- **b ↑**: Creates more pronounced skewness and tail behavior
+- **ρ < 0**: Shifts probability mass toward lower prices (negative skew)
+- **m ↑**: Shifts the entire distribution to higher prices
+- **σ ↑**: Makes the distribution more peaked around the center
+
 ### Typical Volatility Smile Shapes
 
 **Equity Options**:
@@ -211,6 +256,14 @@ This application is designed for educational purposes to help understand:
 2. **Parameter intuition**: Each slider demonstrates what each parameter controls
 3. **Model differences**: Comparison between SVI and SSVI approaches
 4. **Smile vs. Surface**: Understanding the difference between single-maturity smiles and full surfaces
+5. **Risk-neutral densities**: Visualizing how volatility smiles translate to probability distributions
+6. **Market expectations**: Understanding what option prices reveal about market sentiment
+
+**Key Learning Objectives**:
+- **Volatility-Density Connection**: See how changes in volatility smile shape directly affect the implied probability distribution
+- **Parameter Impact**: Understand how each SVI parameter affects both volatility and probability
+- **Market Intuition**: Develop intuition for reading market expectations from option prices
+- **Arbitrage Concepts**: Observe how certain parameter combinations can lead to unrealistic probability distributions
 
 ## Practical Applications
 
@@ -220,6 +273,35 @@ In practice, these models are used for:
 - **Risk management**: Scenario analysis and Greeks calculation
 - **Trading**: Identifying mispriced options relative to the fitted surface
 - **Model calibration**: Fitting theoretical models to market prices
+
+## Testing and Verification
+
+The `tests/` directory contains comprehensive verification scripts for the mathematical implementation:
+
+### Test Scripts
+
+- **`compare_density_formulas.py`**: Compares old vs corrected SVI density implementations, showing dramatic improvement in probability conservation
+- **`verify_density.py`**: Mathematical verification suite that validates density properties (integration to 1, non-negativity, etc.)
+- **`test_extreme_svi.py`**: Tests robustness under extreme parameter values and boundary conditions
+
+### Key Validation Results
+
+The implementation has been rigorously tested and validates:
+- ✅ Risk-neutral density integrates to ≈1.0 (probability conservation)
+- ✅ No negative densities under normal parameter ranges (no false arbitrage)
+- ✅ Proper mathematical shape function g(y) accounting for SVI surface curvature
+- ✅ Numerical stability across parameter ranges
+
+### Running Tests
+
+```bash
+cd tests/
+python compare_density_formulas.py
+python verify_density.py  
+python test_extreme_svi.py
+```
+
+See `tests/README.md` for detailed documentation of each test script.
 
 ## References
 
