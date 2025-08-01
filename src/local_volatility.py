@@ -29,7 +29,7 @@ from scipy.optimize import minimize_scalar
 import warnings
 from typing import Tuple, Optional, Callable
 
-from svi_models import compute_svi_total_variance, compute_ssvi_total_variance
+from .svi_models import compute_svi_total_variance, compute_ssvi_total_variance
 
 
 def compute_svi_total_variance_derivatives(k_values, a, b, rho, m, sigma):

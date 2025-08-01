@@ -6,7 +6,7 @@ densities derived from SVI volatility surfaces using the Breeden-Litzenberger fo
 """
 
 import numpy as np
-from svi_models import compute_svi_total_variance
+from .svi_models import compute_svi_total_variance
 
 
 def compute_svi_risk_neutral_density(k_values, T, a, b, rho, m, sigma):

@@ -406,7 +406,7 @@ class ParametricSSVIVisualizationApp:
             sigma_atm = np.sqrt(w_test[0] / T_test)
             
             # Compute θ(T) values for different maturities
-            from parametric_ssvi import compute_theta_T, compute_phi_rational
+            from src.parametric_ssvi import compute_theta_T, compute_phi_rational
             
             theta_values = compute_theta_T(np.array(self.maturities), 
                                          self.theta_inf, self.theta_0, self.kappa)
