@@ -444,16 +444,19 @@ T=1.00: {phi_values[2]:.4f}
 T=2.00: {phi_values[3]:.4f}
 """
             
-            self.ax_info.text(0.05, 0.95, info_text, transform=self.ax_info.transAxes,
+            self.ax_info.text(0.05, 0.90, info_text, transform=self.ax_info.transAxes,
                              verticalalignment='top', fontfamily='monospace', fontsize=8)
             
         except Exception as e:
             error_text = f"Info computation error:\n{str(e)}"
-            self.ax_info.text(0.05, 0.95, error_text, transform=self.ax_info.transAxes,
+            self.ax_info.text(0.05, 0.90, error_text, transform=self.ax_info.transAxes,
                              verticalalignment='top', fontfamily='monospace', fontsize=8,
                              color='red')
         
-        self.ax_info.set_title('Model Diagnostics', fontsize=10)
+        # Add title as text instead of using set_title to avoid axis display
+        self.ax_info.text(0.5, 0.98, 'Model Diagnostics', transform=self.ax_info.transAxes,
+                         ha='center', va='top', fontsize=10, fontweight='bold')
+        self.ax_info.axis('off')  # Ensure axis is off
         
     def show_parameter_violations(self, violations: List[str]):
         """Show parameter validation errors."""
