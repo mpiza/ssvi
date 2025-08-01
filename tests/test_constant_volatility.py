@@ -13,8 +13,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from svi_models import compute_svi_volatility_smile
-from local_volatility import compute_svi_local_volatility
+from src.svi_models import compute_svi_volatility_smile
+from src.local_volatility import compute_svi_local_volatility
 
 def create_flat_svi_parameters(target_vol=0.20, T=1.0):
     """

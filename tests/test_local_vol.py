@@ -4,7 +4,7 @@ Simple test of local volatility computation
 """
 
 import numpy as np
-from local_volatility import (
+from src.local_volatility import (
     compute_svi_local_volatility,
     compute_ssvi_local_volatility,
     print_local_volatility_analysis,

@@ -1,4 +1,11 @@
 import numpy as np
+
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import matplotlib
 
 # Use a non-interactive backend when this script is imported.  If run directly,
@@ -10,9 +17,9 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 
 # Import the separated core calculation modules
-from svi_models import compute_svi_surface, compute_ssvi_surface, compute_svi_volatility_smile
-from density_analysis import compute_svi_risk_neutral_density, verify_density_properties
-from local_volatility import compute_svi_local_volatility
+from src.svi_models import compute_svi_surface, compute_ssvi_surface, compute_svi_volatility_smile
+from src.density_analysis import compute_svi_risk_neutral_density, verify_density_properties
+from src.local_volatility import compute_svi_local_volatility
 
 
 def run_svi_interactive():

@@ -14,8 +14,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from svi_models import compute_svi_volatility_smile, compute_svi_total_variance
-from local_volatility import compute_svi_total_variance_derivatives, dupire_local_volatility_from_total_variance
+from src.svi_models import compute_svi_volatility_smile, compute_svi_total_variance
+from src.local_volatility import compute_svi_total_variance_derivatives, dupire_local_volatility_from_total_variance
 
 def create_realistic_svi_surface():
     """

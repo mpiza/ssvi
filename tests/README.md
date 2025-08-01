@@ -4,7 +4,9 @@ This directory contains test scripts and verification tools for the SVI volatili
 
 ## Test Scripts
 
-### `compare_density_formulas.py`
+### Core SVI Tests
+
+#### `compare_density_formulas.py`
 **Purpose**: Comprehensive comparison between the old (incorrect) and new (correct) SVI density implementations.
 
 **What it does**:
@@ -15,7 +17,7 @@ This directory contains test scripts and verification tools for the SVI volatili
 
 **Usage**: `python compare_density_formulas.py`
 
-### `verify_density.py`
+#### `verify_density.py`
 **Purpose**: Mathematical verification suite for the SVI risk-neutral density calculation.
 
 **What it does**:
@@ -27,7 +29,7 @@ This directory contains test scripts and verification tools for the SVI volatili
 
 **Usage**: `python verify_density.py`
 
-### `test_extreme_svi.py`
+#### `test_extreme_svi.py`
 **Purpose**: Tests SVI density behavior under extreme parameter values.
 
 **What it does**:
@@ -39,12 +41,84 @@ This directory contains test scripts and verification tools for the SVI volatili
 
 **Usage**: `python test_extreme_svi.py`
 
-## Generated Files
+### Parametric SSVI Tests
 
-### PNG Images
-- `debug_density.png`: Density debugging visualizations
-- `density_verification.png`: Density verification plots
-- `svi_investigation.png`: SVI parameter investigation results
+#### `test_parametric_ssvi.py`
+**Purpose**: Basic parametric SSVI model functionality tests.
+
+#### `test_analytical_derivatives.py`
+**Purpose**: Comprehensive test of parametric SSVI with analytical derivatives.
+
+**What it does**:
+- Validates all derivative calculations (∂w/∂μ, ∂²w/∂μ², ∂w/∂T)
+- Checks positivity constraints for arbitrage-free surfaces
+- Generates visualizations of total variance and derivatives
+- Tests complete parametric SSVI framework
+
+**Usage**: `python test_analytical_derivatives.py`
+
+#### `test_phi_derivative_accuracy.py`
+**Purpose**: Verification that analytical φ(θ) derivative matches numerical derivatives.
+
+**What it does**:
+- Compares analytical quotient rule implementation vs numerical differentiation
+- Tests accuracy across different θ values and step sizes
+- Validates machine precision accuracy of analytical approach
+- Generates accuracy plots and error analysis
+
+**Usage**: `python test_phi_derivative_accuracy.py`
+
+### Local Volatility Tests
+
+#### `test_constant_volatility.py`
+**Purpose**: Validates Dupire formula implementation using constant volatility case.
+
+#### `test_realistic_local_vol.py`
+**Purpose**: Tests local volatility computation with realistic market-like parameters.
+
+#### `test_local_vol.py`
+**Purpose**: General local volatility testing framework.
+
+## Directory Structure
+
+```
+tests/
+├── README.md                           # This file
+├── plots/                              # Generated plots directory
+│   ├── parametric_ssvi_derivatives_test.png
+│   ├── phi_derivative_verification.png
+│   ├── debug_density.png
+│   ├── density_verification.png
+│   └── svi_investigation.png
+├── compare_density_formulas.py         # SVI density formula comparison
+├── verify_density.py                   # SVI density verification suite
+├── test_extreme_svi.py                 # Extreme parameter testing
+├── test_parametric_ssvi.py             # Basic parametric SSVI tests
+├── test_analytical_derivatives.py      # Analytical derivatives validation
+├── test_phi_derivative_accuracy.py     # φ(θ) derivative accuracy test
+├── test_constant_volatility.py         # Constant volatility Dupire test
+├── test_realistic_local_vol.py         # Realistic local vol testing
+└── test_local_vol.py                   # General local volatility tests
+```
+
+## Running Tests
+
+### Individual Tests
+```bash
+cd tests
+python test_analytical_derivatives.py      # Test parametric SSVI derivatives
+python test_phi_derivative_accuracy.py     # Test φ derivative accuracy
+python verify_density.py                   # Verify SVI density calculations
+```
+
+### All Tests
+```bash
+cd tests
+for test_file in test_*.py; do
+    echo "Running $test_file..."
+    python "$test_file"
+done
+```
 
 ## Key Mathematical Results
 

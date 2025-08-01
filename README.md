@@ -1,6 +1,123 @@
-# Volatility Surface Visualization Application
+# Parametric SSVI Implementation & Volatility Surface Visualization
 
-This application provides interactive visualization of volatility surfaces using the SVI (Stochastic Volatility Inspired) and SSVI (Surface SVI) parameterizations. It offers three different visualization modes to help understand how these models work and how their parameters affect volatility structures.
+A comprehensive Python implementation featuring:
+1. **Parametric SSVI model** with analytical derivatives and interactive tools
+2. **Classic SVI/SSVI visualization** application for educational purposes
+
+## 🚀 Quick Start
+
+### Interactive Application (Recommended)
+```bash
+# Run the main interactive application
+python apps/parametric_ssvi_iv_lv_density_app.py
+```
+
+### Core Module Usage
+```python
+from parametric_ssvi import compute_parametric_ssvi_all_derivatives
+
+# Compute total variance and all derivatives
+w, w_prime, w_double_prime, dw_dT = compute_parametric_ssvi_all_derivatives(
+    mu_values, T, rho, theta_inf, theta_0, kappa, p_coeffs, q_coeffs
+)
+```
+
+## 📁 Project Structure
+
+```
+ssvi/
+├── 📄 Core Modules
+│   ├── parametric_ssvi.py          # Parametric SSVI with analytical derivatives
+│   ├── svi_models.py               # Basic SVI models
+│   ├── local_volatility.py         # Dupire formula implementation
+│   └── density_analysis.py         # Risk-neutral density analysis
+├── 🖥️ apps/                        # Interactive Applications
+│   ├── parametric_ssvi_iv_lv_density_app.py  # Main interactive app ⭐
+│   ├── parametric_ssvi_app.py      # Basic parametric SSVI
+│   ├── enhanced_parametric_ssvi_app.py       # Extended features
+│   ├── simple_parametric_ssvi_app.py         # Educational version
+│   └── volatility_surface_app.py   # General volatility tool
+├── 📊 analysis/                     # Analysis & Benchmarking
+│   ├── performance_analysis.py     # Performance benchmarking
+│   ├── quick_iv_lv_comparison.py   # IV/LV comparison
+│   └── test_derivatives.py         # Derivative validation
+├── 🧪 tests/                       # Comprehensive Testing
+│   ├── test_analytical_derivatives.py        # Derivatives validation
+│   ├── test_phi_derivative_accuracy.py       # φ derivative accuracy
+│   ├── run_analytical_tests.py     # Test runner
+│   └── plots/                      # Generated test plots
+├── 📚 examples/                    # Usage Examples
+└── 📖 Documentation
+    ├── MATHEMATICAL_DERIVATIONS.md # Complete mathematical foundation
+    └── PROJECT_ORGANIZATION.md     # Detailed organization guide
+```
+
+## Parametric SSVI - Core Implementation ⭐
+
+### Mathematical Foundation
+
+The parametric SSVI model extends the standard SSVI with time-dependent parameters:
+
+```
+w(μ, T) = (θT/2) * [1 + ρφ(θT)μ + √((φ(θT)μ + ρ)² + (1 - ρ²))]
+```
+
+Where:
+- `θT = θ∞T + (θ0 - θ∞) * (1 - e^(-κT))/κ` (time-dependent variance level)
+- `φ(θ) = (p0 + p1*θ + p2*θ²)/(q0 + q1*θ + q2*θ²)` (rational skew function)
+
+### Key Features
+
+#### ⭐ Analytical Derivatives
+- **Exact mathematical formulas** for all derivatives (no finite differences!)
+- `∂w/∂μ`, `∂²w/∂μ²`, and `∂w/∂T` computed analytically
+- Superior accuracy (1e-12 error vs 1e-6 for finite differences)
+- Essential for local volatility and calibration applications
+
+#### Interactive Visualization
+
+```python
+import numpy as np
+from parametric_ssvi import compute_parametric_ssvi_all_derivatives
+
+# Define parameters
+mu_values = np.array([0.0])
+T, rho = 1.0, 0.1
+theta_inf, theta_0, kappa = 0.04, 0.09, 2.0
+p_coeffs, q_coeffs = [1.0, 0.2, -0.1], [1.0, 0.1, 0.0]
+
+# Compute all derivatives analytically
+w, w_prime, w_double_prime, dw_dT = compute_parametric_ssvi_all_derivatives(
+    mu_values, T, rho, theta_inf, theta_0, kappa, p_coeffs, q_coeffs
+)
+
+print(f"Total variance: {w[0]:.6f}")
+print(f"∂w/∂μ: {w_prime[0]:.6f}")
+print(f"∂²w/∂μ²: {w_double_prime[0]:.6f}")
+print(f"∂w/∂T: {dw_dT[0]:.6f}")
+```
+
+#### Interactive Application
+
+```python
+from parametric_ssvi_app import ParametricSSVIApp
+
+app = ParametricSSVIApp()
+app.run()  # Launches interactive GUI with real-time parameter adjustment
+```
+
+### Files
+- `parametric_ssvi.py` - Core analytical implementation
+- `parametric_ssvi_app.py` - Interactive application
+- `enhanced_parametric_ssvi_app.py` - Advanced application with benchmarking
+- `examples/parametric_ssvi_examples.py` - Usage examples
+- `tests/test_parametric_ssvi.py` - Test suite
+- `performance_analysis.py` - Performance benchmarking
+- `IMPLEMENTATION_SUMMARY.py` - Complete documentation
+
+---
+
+## Classic SVI/SSVI Visualization Application
 
 ## Table of Contents
 
