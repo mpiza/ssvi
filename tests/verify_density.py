@@ -5,6 +5,10 @@ This script runs several tests to validate the mathematical correctness
 of the density calculation.
 """
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats

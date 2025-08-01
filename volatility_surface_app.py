@@ -12,6 +12,7 @@ from matplotlib.widgets import Slider, Button
 # Import the separated core calculation modules
 from svi_models import compute_svi_surface, compute_ssvi_surface, compute_svi_volatility_smile
 from density_analysis import compute_svi_risk_neutral_density, verify_density_properties
+from local_volatility import compute_svi_local_volatility
 
 
 def run_svi_interactive():
@@ -205,12 +206,12 @@ def run_svi_smile_interactive():
     """Launch an interactive 2D plot for the SVI volatility smile at a single maturity.
 
     This function opens a Matplotlib window containing two subplots:
-    1. Top: SVI volatility smile as a function of log-moneyness
+    1. Top: SVI implied volatility smile AND local volatility as functions of log-moneyness
     2. Bottom: Risk-neutral density function derived from the smile
     
-    It provides sliders for each of the five SVI parameters (a, b, rho, m, sigma)
-    and the maturity, allowing the user to see how each parameter affects the
-    volatility smile shape and implied probability distribution.
+    It provides sliders for each of the five SVI parameters (a, b, rho, m, sigma),
+    maturity, and interest rate, allowing the user to see how each parameter affects
+    both the implied and local volatility shapes and the implied probability distribution.
     """
     # Define the grid for log‑moneyness - use reasonable range focused on typical smile behavior
     k_vals = np.linspace(-3.0, 3.0, 300)
@@ -223,29 +224,49 @@ def run_svi_smile_interactive():
         "m": 0.0,
         "sigma": 0.4,
         "T": 0.5,  # maturity in years
+        "r": 0.02, # interest rate
     }
 
-    vol_smile = compute_svi_volatility_smile(k_vals, **init_params)
-    density = compute_svi_risk_neutral_density(k_vals, **init_params)
+    # Compute initial values
+    vol_smile = compute_svi_volatility_smile(k_vals, **{k: v for k, v in init_params.items() if k != 'r'})
+    density = compute_svi_risk_neutral_density(k_vals, **{k: v for k, v in init_params.items() if k != 'r'})
+    local_vol, is_local_valid, local_diagnostics = compute_svi_local_volatility(k_vals, **init_params)
     
     # Verify the initial density
     print("=== Density Verification ===")
     verify_density_properties(k_vals, density)
     print("============================")
+    
+    # Print local volatility info
+    print("=== Local Volatility Info ===")
+    valid_count = np.sum(is_local_valid)
+    print(f"Local volatility: {valid_count}/{len(k_vals)} points valid ({100*valid_count/len(k_vals):.1f}%)")
+    if valid_count > 0:
+        valid_local_vol = local_vol[is_local_valid]
+        print(f"Local vol range: {np.min(valid_local_vol):.4f} - {np.max(valid_local_vol):.4f}")
+    print("===============================")
 
     # Create the figure with two subplots
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 12))
     
-    # Plot the initial smile (top subplot)
-    line1, = ax1.plot(k_vals, vol_smile, 'b-', linewidth=2, label='SVI volatility smile')
+    # Plot the initial volatilities (top subplot)
+    line_implied, = ax1.plot(k_vals, vol_smile, 'b-', linewidth=2, label='Implied volatility')
+    line_local, = ax1.plot(k_vals[is_local_valid], local_vol[is_local_valid], 'g-', linewidth=2, label='Local volatility')
+    
+    # Mark invalid local volatility regions
+    if np.any(~is_local_valid):
+        invalid_k = k_vals[~is_local_valid]
+        ax1.scatter(invalid_k, np.full(len(invalid_k), np.nan), c='red', marker='x', s=30, 
+                   label='Invalid local vol', alpha=0.7)
+    
     ax1.set_xlabel("log‑moneyness (k)")
-    ax1.set_ylabel("implied volatility")
-    ax1.set_title(f"SVI volatility smile (T = {init_params['T']:.2f} years)")
+    ax1.set_ylabel("volatility")
+    ax1.set_title(f"SVI Implied vs Local Volatility (T = {init_params['T']:.2f} years, r = {init_params['r']:.3f})")
     ax1.grid(True, alpha=0.3)
     ax1.legend()
     
     # Plot the initial density (bottom subplot)
-    line2, = ax2.plot(k_vals, density, 'r-', linewidth=2, label='Risk-neutral density')
+    line_density, = ax2.plot(k_vals, density, 'r-', linewidth=2, label='Risk-neutral density')
     ax2.set_xlabel("log‑moneyness (k)")
     ax2.set_ylabel("probability density")
     ax2.set_title(f"Risk-neutral density (T = {init_params['T']:.2f} years)")
@@ -253,7 +274,7 @@ def run_svi_smile_interactive():
     ax2.legend()
 
     # Adjust layout to make room for sliders
-    plt.subplots_adjust(left=0.1, bottom=0.35, hspace=0.3)
+    plt.subplots_adjust(left=0.1, bottom=0.4, hspace=0.3)
 
     # Create axes for sliders
     slider_axs = {}
@@ -264,10 +285,11 @@ def run_svi_smile_interactive():
         "m": (-1.0, 1.0),     # horizontal shift
         "sigma": (0.0, 1.0),  # curvature parameter
         "T": (0.1, 2.0),      # maturity
+        "r": (0.0, 0.1),      # interest rate
     }
 
     # Place sliders vertically stacked below the plot
-    slider_y_start = 0.3
+    slider_y_start = 0.35
     slider_height = 0.03
     slider_spacing = 0.04
     for i, (param, (p_min, p_max)) in enumerate(param_ranges.items()):
@@ -285,20 +307,38 @@ def run_svi_smile_interactive():
     def update(val=None):
         # Read current slider values
         params = {p: slider_axs[p].val for p in param_ranges.keys()}
-        # Recompute the smile and density
-        new_vol_smile = compute_svi_volatility_smile(k_vals, **params)
-        new_density = compute_svi_risk_neutral_density(k_vals, **params)
         
-        # Update the smile line data (top subplot)
-        line1.set_ydata(new_vol_smile)
-        ax1.set_title(f"SVI volatility smile (T = {params['T']:.2f} years)")
+        # Separate parameters for different function calls
+        vol_params = {k: v for k, v in params.items() if k != 'r'}
+        local_vol_params = params.copy()  # Local vol needs all parameters including r
+        
+        # Recompute the smile, local volatility, and density
+        new_vol_smile = compute_svi_volatility_smile(k_vals, **vol_params)
+        new_density = compute_svi_risk_neutral_density(k_vals, **vol_params)
+        new_local_vol, new_is_local_valid, new_local_diagnostics = compute_svi_local_volatility(k_vals, **local_vol_params)
+        
+        # Update the implied volatility line
+        line_implied.set_ydata(new_vol_smile)
+        
+        # Update the local volatility line (only valid points)
+        if np.any(new_is_local_valid):
+            line_local.set_data(k_vals[new_is_local_valid], new_local_vol[new_is_local_valid])
+        else:
+            line_local.set_data([], [])  # No valid points
+        
+        # Update subplot titles
+        ax1.set_title(f"SVI Implied vs Local Volatility (T = {params['T']:.2f} years, r = {params['r']:.3f})")
+        ax2.set_title(f"Risk-neutral density (T = {params['T']:.2f} years)")
+        
+        # Update the density line
+        line_density.set_ydata(new_density)
+        
+        # Auto-rescale the volatility plot to show both curves properly
         ax1.relim()
         ax1.autoscale_view(scalex=False, scaley=True)
         
-        # Update the density line data (bottom subplot)
-        line2.set_ydata(new_density)
-        ax2.set_title(f"Risk-neutral density (T = {params['T']:.2f} years)")
-        ax2.relim()
+        # Auto-rescale the density plot
+        ax2.relim() 
         ax2.autoscale_view(scalex=False, scaley=True)
         
         fig.canvas.draw_idle()
@@ -320,18 +360,32 @@ def run_svi_smile_interactive():
     plt.show()
 
 
-if __name__ == "__main__":
-    # Simple CLI interface to choose which surface to display
-    print("Select the volatility surface to visualize:")
-    print("  1) SVI surface (a, b, rho, m, sigma)")
-    print("  2) SSVI surface (theta, phi, rho)")
-    print("  3) SVI smile at single maturity (a, b, rho, m, sigma, T)")
-    choice = input("Enter 1, 2, or 3: ").strip()
-    if choice == "1":
+def main():
+    """The main entry point for the volatility surface application."""
+    print("Volatility Surface Application")
+    print("==============================")
+    print()
+    print("Please select an analysis to run:")
+    print("1. SVI Volatility Surface (3D interactive)")
+    print("2. SSVI Volatility Surface (3D interactive)")
+    print("3. SVI Volatility Smile + Density + Local Volatility (2D interactive)")
+    print()
+
+    choice = input("Enter your choice (1, 2, or 3): ").strip()
+
+    if choice == '1':
+        print("Launching 3D SVI surface visualization...")
         run_svi_interactive()
-    elif choice == "2":
+    elif choice == '2':
+        print("Launching 3D SSVI surface visualization...")
         run_ssvi_interactive()
-    elif choice == "3":
+    elif choice == '3':
+        print("Launching 2D SVI smile + density + local volatility visualization...")
         run_svi_smile_interactive()
     else:
-        print("Invalid selection.")
+        print(f"Invalid choice: {choice}")
+        print("Please run the application again and choose 1, 2, or 3.")
+
+
+if __name__ == "__main__":
+    main()

@@ -294,14 +294,54 @@ The implementation has been rigorously tested and validates:
 
 ### Running Tests
 
+The project includes comprehensive tests and examples:
+
 ```bash
-cd tests/
-python compare_density_formulas.py
-python verify_density.py  
-python test_extreme_svi.py
+# Core tests and verification
+python tests/compare_density_formulas.py
+python tests/verify_density.py  
+python tests/test_extreme_svi.py
+python tests/test_constant_volatility.py
+python tests/test_realistic_local_vol.py
+
+# Examples and documentation
+python examples/basic_examples.py
+python examples/local_volatility_examples.py
+python docs/explain_time_derivatives.py
 ```
 
 See `tests/README.md` for detailed documentation of each test script.
+
+## Project Structure
+
+```
+ssvi/
+├── README.md                    # Main documentation
+├── volatility_surface_app.py    # Interactive visualization application
+├── svi_models.py               # SVI and SSVI model implementations
+├── local_volatility.py         # Local volatility computation using Dupire formula
+├── density_analysis.py         # Risk-neutral density analysis
+├── examples/                   # Usage examples and demonstrations
+│   ├── basic_examples.py       # Basic SVI/SSVI examples
+│   └── local_volatility_examples.py # Local volatility examples
+├── tests/                      # Test suite and verification
+│   ├── README.md              # Testing documentation
+│   ├── test_constant_volatility.py # Constant volatility test case
+│   ├── test_realistic_local_vol.py # Realistic local volatility test
+│   ├── test_extreme_svi.py    # Edge case testing
+│   └── verify_density.py      # Density verification tests
+└── docs/                       # Documentation and educational materials
+    └── explain_time_derivatives.py # Time derivative handling explanation
+```
+
+### Key Files
+
+- **volatility_surface_app.py**: Main interactive application with 3D visualization
+- **svi_models.py**: Core SVI/SSVI implementations and parameter validation
+- **local_volatility.py**: Dupire formula implementation with multiple time derivative approaches
+- **examples/**: Demonstrates practical usage patterns
+- **tests/**: Comprehensive testing including edge cases and realistic scenarios
+- **docs/**: Educational materials explaining mathematical concepts
 
 ## References
 

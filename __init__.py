@@ -22,6 +22,14 @@ from density_analysis import (
     compute_moment_from_density
 )
 
+from local_volatility import (
+    compute_svi_local_volatility,
+    compute_ssvi_local_volatility,
+    analyze_local_volatility_properties,
+    compare_implied_vs_local_volatility,
+    print_local_volatility_analysis
+)
+
 __version__ = "1.0.0"
 __author__ = "Your Name"
 __email__ = "your.email@example.com"
@@ -39,5 +47,11 @@ __all__ = [
     "compute_svi_risk_neutral_density",
     "verify_density_properties",
     "analyze_density_arbitrage",
-    "compute_moment_from_density"
+    "compute_moment_from_density",
+    # Local volatility functions
+    "compute_svi_local_volatility",
+    "compute_ssvi_local_volatility",
+    "analyze_local_volatility_properties",
+    "compare_implied_vs_local_volatility",
+    "print_local_volatility_analysis"
 ]
