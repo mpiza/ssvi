@@ -6,7 +6,7 @@ This document describes the complete organization of the parametric SSVI project
 
 ```
 ssvi/
-├── src/                           # Core implementation modules
+├── src/                           # Core implementation package (Python package directory)
 │   ├── __init__.py                # Package initialization with exports
 │   ├── README.md                  # Module documentation
 │   ├── parametric_ssvi.py         # Main parametric SSVI implementation
@@ -56,9 +56,11 @@ ssvi/
 ├── .venv/                         # Virtual environment
 ├── __init__.py                    # Root package initialization
 ├── MATHEMATICAL_DERIVATIONS.md    # Complete mathematical documentation
-├── PROJECT_ORGANIZATION.md        # This file
+├── PROJECT_ORGANIZATION.md        # Project structure documentation
 ├── ORGANIZATION_COMPLETE.md       # Organization completion notes
 ├── README.md                      # Main project documentation
+├── setup.py                       # Setuptools-based project configuration
+├── pyproject.toml                 # Modern Python project configuration (optional)
 └── .gitignore                     # Git ignore rules
 ```
 
@@ -93,7 +95,11 @@ ssvi/
 
 ## Import Usage
 
-### From Applications
+> **Note:** The recommended way to use the import examples below is to install the package in editable mode by running `pip install -e .` from the project root (ensure you have a `setup.py` or `pyproject.toml` in place). This avoids manual `PYTHONPATH` manipulation and ensures consistent imports across environments.
+
+### Import Examples
+
+#### During Development (when running from the project root, with `src/` in `PYTHONPATH`)
 ```python
 from src.parametric_ssvi import compute_parametric_ssvi_total_variance
 from src.svi_models import compute_svi_volatility_smile

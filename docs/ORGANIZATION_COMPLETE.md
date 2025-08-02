@@ -9,7 +9,7 @@ The SSVI project has been successfully organized into a clean, maintainable stru
 ### 📁 **Directory Structure Created**
 ```
 ssvi/
-├── 📄 Core Modules (Root)           # parametric_ssvi.py, svi_models.py, etc.
+├── src/                            # Core implementation modules (parametric_ssvi.py, svi_models.py, local_volatility.py)
 ├── 🖥️ apps/                        # Interactive applications
 ├── 📊 analysis/                     # Performance & comparison tools  
 ├── 🧪 tests/                       # Comprehensive testing suite
@@ -20,7 +20,7 @@ ssvi/
 
 ### 🖥️ **Applications Organized** (`apps/`)
 **Moved to dedicated directory:**
-- `parametric_ssvi_iv_lv_density_app.py` ⭐ **Main interactive app**
+- `parametric_ssvi_iv_lv_density_app.py` - Main interactive app
 - `parametric_ssvi_app.py` - Basic version
 - `enhanced_parametric_ssvi_app.py` - Extended features
 - `simple_parametric_ssvi_app.py` - Educational version
@@ -145,7 +145,7 @@ python examples/parametric_ssvi_examples.py
 
 | Directory | Files | Purpose |
 |-----------|-------|---------|
-| Root | 4 | Core modules (parametric_ssvi.py, etc.) |
+| `src/` | 4 | Core modules (parametric_ssvi.py, etc.) |
 | `apps/` | 5 | Interactive applications |
 | `analysis/` | 3 | Performance & comparison tools |
 | `tests/` | 8+ | Comprehensive testing |

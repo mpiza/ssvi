@@ -209,7 +209,7 @@ w = (θ_T/2) * [1 + ρφ_T μ + √((φ_T μ + ρ)² + (1 - ρ²))]
 The local volatility squared is given by:
 
 ```
-σ_LV²(μ, T) = (∂w/∂T + r * w) / [1 - μ/(2w) * ∂w/∂μ + (1/4) * ((1/w) * (∂w/∂μ)² + ∂²w/∂μ²)]
+σ_LV²(μ, T) = (∂w/∂T + r * w) / [1 - μ/(2w) * ∂w/∂μ - (1/4) * ((1/w) * (∂w/∂μ)² + ∂²w/∂μ²)]
 ```
 
 ### 6.2 Numerator
@@ -223,7 +223,7 @@ Where r is the risk-free rate.
 ### 6.3 Denominator
 
 ```
-Denominator = 1 - μ/(2w) * ∂w/∂μ + (1/4) * ((1/w) * (∂w/∂μ)² + ∂²w/∂μ²)
+Denominator = 1 - μ/(2w) * ∂w/∂μ - (1/4) * ((1/w) * (∂w/∂μ)² + ∂²w/∂μ²)
 ```
 
 **Breaking down the terms:**
@@ -275,7 +275,7 @@ This provides exact derivatives with machine precision accuracy, avoiding numeri
 ### 7.3 Edge Cases
 
 **κ → 0 case:**
-Use `θ(T) = θ₀ * T` and `∂θ/∂T = θ₀`
+When κ is sufficiently small (e.g., κ < 1e-6), use the approximation `θ(T) = θ₀ * T` and `∂θ/∂T = θ₀`.
 
 **Small denominator in φ(θ):**
 Replace with small positive value (e.g., 1e-12) and issue warning
