@@ -149,7 +149,7 @@ class ParametricSSVIVisualizationApp:
         # Numerator coefficients (left column continued)
         self.slider_p0 = Slider(
             plt.axes([left_x, top_y - 4*y_spacing, slider_width, slider_height]), 'p₀ (numerator)', 
-            0.1, 3.0, valinit=self.p_coeffs[0], **slider_props
+            0.0, 3.0, valinit=self.p_coeffs[0], **slider_props
         )
         
         self.slider_p1 = Slider(
@@ -412,6 +412,11 @@ class ParametricSSVIVisualizationApp:
                                          self.theta_inf, self.theta_0, self.kappa)
             phi_values = compute_phi_rational(theta_values, self.p_coeffs, self.q_coeffs)
             
+            # Check for flat smile condition (IV = LV)
+            max_derivative = max(abs(w_prime_test[0]), abs(w_double_prime_test[0]))
+            is_flat_smile = max_derivative < 1e-6
+            flat_indicator = "✅ FLAT SMILE (IV≈LV)" if is_flat_smile else ""
+            
             info_text = f"""Current Parameters:
             
 SSVI Parameters:
@@ -421,15 +426,17 @@ SSVI Parameters:
 κ = {self.kappa:.3f}
 
 Rational Function φ(θ):
-p = [{self.p_coeffs[0]:.2f}, {self.p_coeffs[1]:.2f}, {self.p_coeffs[2]:.2f}]
+p = [{self.p_coeffs[0]:.6f}, {self.p_coeffs[1]:.2f}, {self.p_coeffs[2]:.2f}]
 q = [1.00, {self.q_coeffs[1]:.2f}, {self.q_coeffs[2]:.2f}]
 
 Diagnostics (T=1, μ=0):
 w(0,1) = {w_test[0]:.4f}
 σ_ATM = {sigma_atm:.1%}
-∂w/∂μ = {w_prime_test[0]:.4f}
-∂²w/∂μ² = {w_double_prime_test[0]:.4f}
+∂w/∂μ = {w_prime_test[0]:.8f}
+∂²w/∂μ² = {w_double_prime_test[0]:.8f}
 ∂w/∂T = {dw_dT_test[0]:.4f}
+
+{flat_indicator}
 
 θ(T) Values:
 T=0.25: {theta_values[0]:.4f}
