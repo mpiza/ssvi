@@ -1,4 +1,4 @@
-# Parametric SSVI Implementation & Volatility Surface Visualization
+# Parametric SSVI Implementation & Volatility Surface Visualization - Produced by Copilot
 
 A comprehensive Python implementation featuring:
 1. **Parametric SSVI model** with analytical derivatives and interactive tools
